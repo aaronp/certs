@@ -7,11 +7,22 @@ trap "cleanupCA" EXIT
 export CA_DIR=${CA_DIR:-target/ca}
 mkdir -p $CA_DIR
 
+export CA_DOMAIN=${CA_DOMAIN:-`hostname`}
+
 export CA_PWFILE=${CA_PWFILE:-"$CA_DIR/capass.txt"}
 export CA_PRIVATE_KEY_FILE=${CA_PRIVATE_KEY_FILE:-"$CA_DIR/secret.key"}
 export CA_PUBLIC_KEY_FILE=${CA_PUBLIC_KEY_FILE:-"$CA_DIR/secret.pub"}
-export CA_DETAILS=${CA_DETAILS:-$CA_DIR/ca-options.conf}
-export CA_FILE=${CA_FILE:-"$CA_DIR/myCA.pem"}
+export CA_DETAILS_FILE=${CA_DETAILS_FILE:-$CA_DIR/ca-options.conf}
+export CA_FILE=${CA_FILE:-"$CA_DIR/${CA_DOMAIN}-ca.crt"}
+
+# these are used to create the default 'CA_DETAILS_FILE' if it's not specified
+export CA_DETAILS_C=${CA_DETAILS_C:-GB}
+export CA_DETAILS_ST=${CA_DETAILS_ST:-London}
+export CA_DETAILS_L=${CA_DETAILS_L:-London}
+export CA_DETAILS_O=${CA_DETAILS_O:-End Point}
+export CA_DETAILS_OU=${CA_DETAILS_OU:-Testing Domain}
+export CA_DETAILS_emailAddress=${CA_DETAILS_emailAddress:-your-administrative-address@your-awesome-existing-domain.com}
+
 
 CA_CREATED_PW_FILE=false
 INFO=">>> "
@@ -63,10 +74,10 @@ ensureCAKeys () {
 }
 
 ensureCASubject () {
-    if [ ! -f $CA_DETAILS ];then
-		echo "$INFO CA details '$CA_DETAILS' doesn't exist, creating"
+    if [ ! -f $CA_DETAILS_FILE ];then
+		echo "$INFO CA details CA_DETAILS_FILE '$CA_DETAILS_FILE' doesn't exist, creating"
 
-    		cat > ${CA_DETAILS} <<-EOF
+    		cat > ${CA_DETAILS_FILE} <<-EOF
 [req]
 default_bits = 2048
 prompt = no
@@ -75,23 +86,24 @@ req_extensions = req_ext
 distinguished_name = dn
 
 [ dn ]
-C=US
-ST=New York
-L=Rochester
-O=End Point
-OU=Testing Domain
-emailAddress=your-administrative-address@your-awesome-existing-domain.com
-CN = www.your-new-domain.com
+C=$CA_DETAILS_C
+ST=$CA_DETAILS_ST
+L=$CA_DETAILS_L
+O=$CA_DETAILS_O
+OU=$CA_DETAILS_OU
+emailAddress=$CA_DETAILS_emailAddress
+CN = $CA_DOMAIN
 
 [ req_ext ]
 subjectAltName = @alt_names
 
 [ alt_names ]
-DNS.1 = your-new-domain.com
-DNS.2 = www.your-new-domain.com
+DNS.1 = $CA_DOMAIN
+DNS.2 = www.$CA_DOMAIN
+DNS.3 = localhost
 EOF
 	else
-        echo "$INFO CA_DETAILS ${CA_DETAILS} already exists"
+        echo "$INFO CA_DETAILS_FILE ${CA_DETAILS_FILE} already exists"
 	fi
 }
 
@@ -108,9 +120,7 @@ ensureCA () {
 
         #https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/
         #https://www.endpoint.com/blog/2014/10/30/openssl-csr-with-alternative-names-one
-        echo "Invoking:"
-        echo "openssl req -x509 -new -nodes -key ${CA_PRIVATE_KEY_FILE} -passin file:$CA_PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )"
-	    openssl req -x509 -new -nodes -key ${CA_PRIVATE_KEY_FILE} -passin file:$CA_PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )
+	    openssl req -x509 -new -nodes -key ${CA_PRIVATE_KEY_FILE} -passin file:$CA_PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS_FILE )
 	else
 		echo "$INFO CA_FILE '${CA_FILE}'' exists, skipping"
 	fi

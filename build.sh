@@ -4,5 +4,5 @@ source ./createCrt.sh
 # ensureCA
 
 
-ensureSignedCrt
-
+ensureJKSFromSignedCertificate
+ensureP12FromSignedCertificate
