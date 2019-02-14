@@ -1,35 +1,37 @@
 #!/usr/bin/env bash
 
-mkdir target
 
-trap "cleanPassword" EXIT
+trap "cleanupCA" EXIT
 
 # some lovely shared variables
-export PWFILE=${PWFILE:-"target/capass.txt"}
-export PRIVATE_KEY_FILE=${PRIVATE_KEY_FILE:-"target/secret.key"}
-export PUBLIC_KEY_FILE=${PUBLIC_KEY_FILE:-"target/secret.pub"}
-export CA_DETAILS=${CA_DETAILS:-target/caDetails.conf}
-export CA_FILE=${CA_FILE:-"target/myCA.pem"}
+export CA_DIR=${CA_DIR:-target/ca}
+mkdir -p $CA_DIR
 
-CREATED_PW_FILE=false
+export CA_PWFILE=${CA_PWFILE:-"$CA_DIR/capass.txt"}
+export CA_PRIVATE_KEY_FILE=${CA_PRIVATE_KEY_FILE:-"$CA_DIR/secret.key"}
+export CA_PUBLIC_KEY_FILE=${CA_PUBLIC_KEY_FILE:-"$CA_DIR/secret.pub"}
+export CA_DETAILS=${CA_DETAILS:-$CA_DIR/caDetails.conf}
+export CA_FILE=${CA_FILE:-"$CA_DIR/myCA.pem"}
+
+CA_CREATED_PW_FILE=false
 INFO=">>> "
-# ensure ther is a $PWFILE
-ensurePassword () {
-	CREATED_PW_FILE=false
-	if [ ! -f $PWFILE ]; then
-	  CREATED_PW_FILE=true
-	  echo "$PWFILE doesn't exist, creating default password..."
-	  echo password > ${PWFILE}
+# ensure ther is a $CA_PWFILE
+ensureCAPassword () {
+	CA_CREATED_PW_FILE=false
+	if [ ! -f $CA_PWFILE ]; then
+	  CA_CREATED_PW_FILE=true
+	  echo "$CA_PWFILE doesn't exist, creating default password..."
+	  echo password > ${CA_PWFILE}
 	else
-	  echo "Using pw file $PWFILE"
+	  echo "Using pw file $CA_PWFILE"
 	fi
 }
 
 # remove the password if it was created
-cleanPassword () {
-	if [[ $CREATED_PW_FILE="true" ]];then
-	  echo "removing $PWFILE"
-	  rm $PWFILE
+cleanupCA () {
+	if [[ $CA_CREATED_PW_FILE="true" ]];then
+	  echo "removing $CA_PWFILE"
+	  rm $CA_PWFILE
 	else
 		echo done
 	fi
@@ -37,26 +39,26 @@ cleanPassword () {
 
 
 # create privagte/public keys
-ensureKeys () {
+ensureCAKeys () {
 
 	echo "+ + + + + + + + + + + + + + + Generating key pair + + + + + + + + + + + + + + + "
 
-    if [ ! -f $PRIVATE_KEY_FILE ];then
-		echo "$INFO Private key '$PRIVATE_KEY_FILE' doesn't exist, creating"
+    if [ ! -f $CA_PRIVATE_KEY_FILE ];then
+		echo "$INFO Private key '$CA_PRIVATE_KEY_FILE' doesn't exist, creating"
 
-    	ensurePassword
-		openssl genrsa -aes128 -passout file:$PWFILE  -out $PRIVATE_KEY_FILE 3072
+    	ensureCAPassword
+		openssl genrsa -aes128 -passout file:$CA_PWFILE  -out $CA_PRIVATE_KEY_FILE 3072
 	else
-        echo "$INFO Private key '$PRIVATE_KEY_FILE' already exists"
+        echo "$INFO Private key '$CA_PRIVATE_KEY_FILE' already exists"
 	fi
 
-    if [ ! -f $PUBLIC_KEY_FILE ];then
-		echo "$INFO public key '$PUBLIC_KEY_FILE' doesn't exist, creating"
+    if [ ! -f $CA_PUBLIC_KEY_FILE ];then
+		echo "$INFO public key '$CA_PUBLIC_KEY_FILE' doesn't exist, creating"
 
-    	ensurePassword
-		openssl rsa -in $PRIVATE_KEY_FILE -passin file:$PWFILE -pubout -out $PUBLIC_KEY_FILE
+    	ensureCAPassword
+		openssl rsa -in $CA_PRIVATE_KEY_FILE -passin file:$CA_PWFILE -pubout -out $CA_PUBLIC_KEY_FILE
 	else
-		echo "$INFO public key $PUBLIC_KEY_FILE already exists"
+		echo "$INFO public key $CA_PUBLIC_KEY_FILE already exists"
 	fi
 }
 
@@ -95,26 +97,26 @@ EOF
 
 }
 
+# ensures the CA_FILE exists or creates one if necessary
 ensureCA () {
 
 	echo "+ + + + + + + + + + + + + + + Generating root CA file $CA_FILE + + + + + + + + + + + + + + + "
 	if [ ! -f $CA_FILE ];then
 		echo "$INFO Certificate Authority file '$CA_FILE' doesn't exist, creating with subject $SUBJECT"
 
-	    ensureKeys
-	    ensurePassword
+	    ensureCAKeys
+	    ensureCAPassword
 	    ensureCASubject
 
         #https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/
         #https://www.endpoint.com/blog/2014/10/30/openssl-csr-with-alternative-names-one
         echo "Invoking:"
-        echo "openssl req -x509 -new -nodes -key ${PRIVATE_KEY_FILE} -passin file:$PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )"
-	    openssl req -x509 -new -nodes -key ${PRIVATE_KEY_FILE} -passin file:$PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )
+        echo "openssl req -x509 -new -nodes -key ${CA_PRIVATE_KEY_FILE} -passin file:$CA_PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )"
+	    openssl req -x509 -new -nodes -key ${CA_PRIVATE_KEY_FILE} -passin file:$CA_PWFILE -sha256 -days 1825 -out ${CA_FILE} -config <( cat $CA_DETAILS )
 	else
 		echo "$INFO CA_FILE '${CA_FILE}'' exists, skipping"
 	fi
 }
 
-ensureCA
 
 
