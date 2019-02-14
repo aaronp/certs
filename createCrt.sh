@@ -12,7 +12,10 @@ mkdir -p $CRT_DIR
 
 
 export CRT_PWFILE=${PWFILE:-"$CRT_DIR/crtpass.txt"}
-export CRT_KEY_FILE=${CRT_KEY_FILE:-"$CRT_DIR/dev.mergebot.com.key.pem"}
+export CRT_NAME=${CRT_NAME:-dev.mergebot.com}
+export CRT_KEY_FILE=${CRT_KEY_FILE:-"$CRT_DIR/$CRT_NAME.pem"}
+export CRT_CR_FILE=${CRT_CR_FILE:-"$CRT_DIR/$CRT_NAME.csr"}
+export CRT_DETAILS=${CRT_DETAILS:-"$CRT_DIR/${CRT_NAME}-subject.conf"}
 
 
 CRT_CREATED_PW_FILE=false
@@ -44,5 +47,51 @@ ensureCrtKey () {
   		openssl genrsa -out ${CRT_KEY_FILE} 2048	
   	else
   		echo "$INFO CRT_KEY_FILE $CRT_KEY_FILE exists, skipping"
+  	fi
+}
+
+
+ensureCRTSubject () {
+    if [ ! -f $CRT_DETAILS ];then
+		echo "$INFO CRT details '$CRT_DETAILS' doesn't exist, creating"
+
+    		cat > ${CRT_DETAILS} <<-EOF
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+req_extensions = req_ext
+distinguished_name = dn
+
+[ dn ]
+C=US
+ST=New York
+L=Rochester
+O=End Point
+OU=Testing Domain
+emailAddress=your-administrative-address@your-awesome-existing-domain.com
+CN = www.your-new-domain.com
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = your-new-domain.com
+DNS.2 = www.your-new-domain.com
+EOF
+	else
+        echo "$INFO CRT_DETAILS ${CRT_DETAILS} already exists"
+	fi
+}
+
+ensureCrtCR () {
+	echo "+ + + + + + + + + + + + + + + Ensuring Cert CRT file $CRT_CR_FILE + + + + + + + + + + + + + + + "
+	if [ ! -f $CRT_CR_FILE ]; then
+  		echo "$INFO creating CRT_CR_FILE $CRT_CR_FILE"
+  		ensureCrtKey
+  		ensureCRTSubject
+  		openssl req -new -key ${CRT_KEY_FILE} -out ${CRT_CR_FILE} -config <( cat $CRT_DETAILS )
+  	else
+  		echo "$INFO CRT_CR_FILE $CRT_CR_FILE exists, skipping"
   	fi
 }

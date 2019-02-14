@@ -41,7 +41,7 @@ cleanupCA () {
 # create privagte/public keys
 ensureCAKeys () {
 
-	echo "+ + + + + + + + + + + + + + + Generating key pair + + + + + + + + + + + + + + + "
+	echo "+ + + + + + + + + + + + + + + Ensuring CA key pair + + + + + + + + + + + + + + + "
 
     if [ ! -f $CA_PRIVATE_KEY_FILE ];then
 		echo "$INFO Private key '$CA_PRIVATE_KEY_FILE' doesn't exist, creating"
@@ -93,14 +93,12 @@ EOF
 	else
         echo "$INFO CA_DETAILS ${CA_DETAILS} already exists"
 	fi
-
-
 }
 
 # ensures the CA_FILE exists or creates one if necessary
 ensureCA () {
 
-	echo "+ + + + + + + + + + + + + + + Generating root CA file $CA_FILE + + + + + + + + + + + + + + + "
+	echo "+ + + + + + + + + + + + + + + Ensuring root CA file $CA_FILE + + + + + + + + + + + + + + + "
 	if [ ! -f $CA_FILE ];then
 		echo "$INFO Certificate Authority file '$CA_FILE' doesn't exist, creating with subject $SUBJECT"
 

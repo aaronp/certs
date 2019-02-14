@@ -3,6 +3,6 @@ source ./createCrt.sh
 
 # ensureCA
 
-ensureCrtKey
+ensureCrtCR
 
 
