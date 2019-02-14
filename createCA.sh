@@ -10,7 +10,7 @@ mkdir -p $CA_DIR
 export CA_PWFILE=${CA_PWFILE:-"$CA_DIR/capass.txt"}
 export CA_PRIVATE_KEY_FILE=${CA_PRIVATE_KEY_FILE:-"$CA_DIR/secret.key"}
 export CA_PUBLIC_KEY_FILE=${CA_PUBLIC_KEY_FILE:-"$CA_DIR/secret.pub"}
-export CA_DETAILS=${CA_DETAILS:-$CA_DIR/caDetails.conf}
+export CA_DETAILS=${CA_DETAILS:-$CA_DIR/ca-options.conf}
 export CA_FILE=${CA_FILE:-"$CA_DIR/myCA.pem"}
 
 CA_CREATED_PW_FILE=false

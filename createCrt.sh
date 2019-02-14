@@ -16,7 +16,7 @@ export CRT_NAME=${CRT_NAME:-dev.mergebot.com}
 export CRT_KEY_FILE=${CRT_KEY_FILE:-"$CRT_DIR/$CRT_NAME.pem"}
 export CRT_CSR_FILE=${CRT_CSR_FILE:-"$CRT_DIR/$CRT_NAME.csr"}
 export CRT_CERT_FILE=${CRT_CERT_FILE:-"$CRT_DIR/$CRT_NAME.crt"}
-export CRT_DETAILS_FILE=${CRT_DETAILS_FILE:-"$CRT_DIR/${CRT_NAME}-subject.conf"}
+export CRT_DETAILS_FILE=${CRT_DETAILS_FILE:-"$CRT_DIR/${CRT_NAME}-options.conf"}
 export CRT_CSR_DETAILS_FILE=${CRT_CSR_DETAILS_FILE:-"$CRT_DIR/${CRT_NAME}-csr.conf"}
 
 
