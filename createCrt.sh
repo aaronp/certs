@@ -27,8 +27,9 @@ cleanCrt () {
 	if [[ $CRT_CREATED_PW_FILE = "true" ]];then
 	  echo "removing $CRT_PWFILE"
 	  rm $CRT_PWFILE
+	else
+	  echo "no need to cleanup CRT "
 	fi
-	echo "createCrt done"
 }
 
 ensureCRTPassword () {
@@ -106,7 +107,7 @@ ensureCrtCSRConfFile () {
 
 	echo "+ + + + + + + + + + + + + + + Ensuring Cert CSR config file $CRT_CSR_DETAILS_FILE + + + + + + + + + + + + + + + "
 	if [ ! -f $CRT_CSR_DETAILS_FILE ]; then
-  		echo "$INFO creating CRT_CSR_DETAILS_FILE $CRT_CSR_DETAILS_FILE"
+  		echo "$INFO creating CRT config file CRT_CSR_DETAILS_FILE $CRT_CSR_DETAILS_FILE"
 
     		cat > ${CRT_CSR_DETAILS_FILE} <<-EOF
 authorityKeyIdentifier=keyid,issuer
@@ -119,7 +120,7 @@ DNS.1 = $CRT_NAME
 DNS.2 = $CRT_NAME.192.168.1.19.xip.io
 EOF
   	else
-  		echo "$INFO CRT_CSR_DETAILS_FILE $CRT_CSR_DETAILS_FILE exists, skipping"
+  		echo "$INFO  CRT config file CRT_CSR_DETAILS_FILE $CRT_CSR_DETAILS_FILE exists, skipping"
   	fi
 
 }
@@ -129,9 +130,16 @@ ensureSignedCrt () {
 	if [ ! -f $CRT_CERT_FILE ]; then
   		echo "$INFO creating CRT_CERT_FILE $CRT_CERT_FILE"
 
-	    ensureCAKeys
+        # we need to sign our crert w/ the CA private key 
+	    ensureCA
+
+	    # we need the cert signing request
         ensureCrtCR
+
+        # we need to reference an 'extfile' for the config of this CSR
         ensureCrtCSRConfFile
+
+        echo "Invoking openssl x509 -req -in ${CRT_CSR_FILE} -CA ${CA_FILE} -CAkey ${CA_PRIVATE_KEY_FILE} -CAcreateserial -out $CRT_CERT_FILE -days 1825 -sha256 -extfile $CRT_CSR_DETAILS_FILE"
   		openssl x509 -req -in ${CRT_CSR_FILE} -CA ${CA_FILE} -CAkey ${CA_PRIVATE_KEY_FILE} -CAcreateserial -out $CRT_CERT_FILE -days 1825 -sha256 -extfile $CRT_CSR_DETAILS_FILE
   	else
   		echo "$INFO Signed certificate CRT_CERT_FILE $CRT_CERT_FILE exists, skipping"

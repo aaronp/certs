@@ -3,6 +3,6 @@ source ./createCrt.sh
 
 # ensureCA
 
-ensureSignedCrt
 
+ensureSignedCrt
 
