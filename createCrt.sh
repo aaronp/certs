@@ -129,6 +129,7 @@ ensureSignedCrt () {
 	if [ ! -f $CRT_CERT_FILE ]; then
   		echo "$INFO creating CRT_CERT_FILE $CRT_CERT_FILE"
 
+	    ensureCAKeys
         ensureCrtCR
         ensureCrtCSRConfFile
   		openssl x509 -req -in ${CRT_CSR_FILE} -CA ${CA_FILE} -CAkey ${CA_PRIVATE_KEY_FILE} -CAcreateserial -out $CRT_CERT_FILE -days 1825 -sha256 -extfile $CRT_CSR_DETAILS_FILE
